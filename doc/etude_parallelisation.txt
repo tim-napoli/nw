@@ -93,5 +93,3 @@
  On introduit la notion de *matrice de gain* qui est une matrice batie sur
 
 
-
-
