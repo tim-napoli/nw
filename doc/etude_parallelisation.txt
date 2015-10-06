@@ -1,0 +1,97 @@
+
+                PARALLELISATION DE L'ALGORITHME DE NEEDLEMAN-WUNSCH
+
+ RESUME
+
+ Ce document consigne l'analyse effectuée de l'algorithme de Needleman-Wunsch
+ de manière à optimiser sa parallélisation, que ce soit du point de vue des
+ données que des tâches.
+
+ L'ALGORITHME DE NEEDLEMAN-WUNSCH
+
+ L'algorithme de Needleman-Wunsch est un algorithme qui permet de trouver
+ le meilleur alignement global de deux séquences de caractères.
+
+        LES DONNEES
+ 
+ Soit C un ensemble de caractères.
+
+ Soit $A = {a_1, ..., a_m}$ une séquence de taille $m$, et 
+      $B = {b_1, ... b_n} une autre séquence de taille $n$,
+      telles que $A \in C^m, B \in C^n$.
+
+        ALIGNEMENT
+
+ On recherche les alignements $X$ et $Y$ de $A$ et $B$ tel que $score(X, Y)$
+ soit optimal.
+
+ %      score(X, Y):
+ %              score = 0
+ %              forall x, y \in X, Y:
+ %                      if is_hole(x) or is_hole(y):
+ %                              score = score - hole_penality
+ %                      if x != y:
+ %                              score = score + similarity_matrix(x, y)
+ %                      if x = y:
+ %                              score = score + similarity_matrix(x, y)
+
+ La pénalité de trou est le score associé à un trou dans l'alignement.
+
+ La matrice de similarité (similarity_matrix) est une matrice $S_{c, c}$ telle
+ que $S_{i, j}$ soit le score de similarité d'un caractère i en face d'un
+ caractère j.
+ Par exemple, on peut dire qu'un match de deux 'a' a plus de valeur qu'un match
+ de deux 'b', ou encore qu'un mauvais alignement d'un 'a' avec un 'c' est plus
+ grave que celui d'un 'a' avec un 'b'.
+
+ La matrice de score classique a l'identité remplie de 1, et le reste de -1.
+
+        MATRICE DE DEPLACEMENT ET DE SCORE
+
+ L'objectif de l'algorithme de Needleman-Wunsch est de construire une matrice
+ de score $M_{m + 1, n + 1} \in N$ ainsi qu'une matrice de déplacement
+ $S_{m + 1, n + 1}$.
+
+ Le domaine des composantes de $S$ est ${rien, haut, gauche, haut-gauche}^3$.
+
+ On labélise les colonnes de $M$ et $S$ par {-, a_1, ..., a_m}, où '-' est le
+ symbole du trou.
+ De même pour les lignes de $M$ et $S$ par {-, b_1, ..., b_n}.
+
+ 
+        LECTURE DE LA MATRICE DE DEPLACEMENT
+
+ Dès que la direction est :
+ - $haut$, on ajoute le caractère $b_j$ à Y, et $-$ à X
+ - $gauche$, on ajoute $-$ à Y et $a_i$ à X
+ - $haut-gauche$, $b_j$ à $Y$ et $a_i$ à $X$.
+
+ 
+
+
+
+ 
+
+ Soit M_{m + 1, n + 1} une matrice telle que toute case (i, j) est le score de
+ l'alignement de {a_0, ..., a_i-1} avec {b_0, ..., b_j-1}.
+
+ La première ligne (respectivement colonne) correspond au trou dans la séquence
+ A (resp. B). Elle est initialisée de manière à ce que 
+
+
+
+ REMARQUES
+
+ La matrice de déplacement est déduite de la matrice de score.
+
+ 
+ ALGORITHME ALTERNATIF
+
+ Cet algorithme est un algorithme qui diffère de Needleman-Wunsch pour la
+ construction de la matrice de score.
+
+ On introduit la notion de *matrice de gain* qui est une matrice batie sur
+
+
+
+
