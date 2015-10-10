@@ -12,6 +12,9 @@ typedef struct algo_cfg {
 
 #define countof(_array)	(sizeof(_array) / sizeof(typeof(_array[0])))
 
+#define max(_a, _b)	(((_a) > (_b)) ? (_a) : (_b))
+#define min(_a, _b)	(((_a) < (_b)) ? (_a) : (_b))
+
 /* Arguments of the Needleman-Wunsch algorithm.
  */
 typedef struct algo_arg {
