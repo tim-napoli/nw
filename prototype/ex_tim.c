@@ -1,39 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <err.h>
 
-#define MAX 100 
-int main()
+int main(int argc, char** argv)
 {
-	printf("hello\n"); 
-	int *a;
-	int * test;
-	unsigned int s = 0;
-	unsigned int s2 = 0;
+	size_t size = 0;
+	sscanf(argv[1], "%zu", &size);
+	printf("allocating %f MB\n", size / (1024.0f * 1024.0f));
 
-	a = (malloc(MAX *sizeof(double)));
-	printf("ok?\n");
-	test = (int*)mmap(NULL,MAX,PROT_READ|PROT_WRITE, MAP_SHARED,-1,0);//probleme mon capitain
-	if(test == MAP_FAILED)
-		errx(1 , "we have a mmap problem\n"); // ?
-	unsigned int i = 0;
-	for (i = 0; i < MAX; i++) {
-		a[i] = 1;
-		test[i] = 1;
+	int* ptr = NULL;
+
+#ifdef MAP
+	ptr = mmap(NULL,
+		   size * sizeof(int),
+		   PROT_READ | PROT_WRITE,
+		   MAP_ANONYMOUS | MAP_PRIVATE,
+		   -1, 0);
+	if (ptr == MAP_FAILED) {
+		printf("couldn't map memory\n");
+		return 1;
 	}
-	for (i = 0; i < MAX; i++) {
-		s += a[i];
-		s2 += test[i];
+#else
+	ptr = malloc(size * sizeof(int));	
+	if (ptr == NULL) {
+		printf("couldn't allocate memory\n");
+		return 1;
 	}
-	printf("s = %u et s2 = %u \n",s,s2);
+#endif
 
-	free(a);
-	munmap(test, MAX);
-	
+	for (int i = 0; i < size; i++) {
+		ptr[i] = rand() % 100;
+	}
 
+	long sum = 0;
+	for (int i = 0; i < size; i++) {
+		sum += ptr[i];
+	}
 
-return 0;
+	printf("%ld\n", sum);
+
+#ifdef MAP
+	munmap(ptr, size * sizeof(int));
+#else
+	free(ptr);
+#endif
+
+	return 0;
 
 }
