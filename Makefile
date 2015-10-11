@@ -17,7 +17,9 @@ LDFLAGS=-lm -lc
 #--------------------- Main rules ------------------------#
 all: init $(EXE) tests prototypes
 
-$(EXE):		$(DOBJ)/nw.o
+$(EXE):		$(DOBJ)/main.o				\
+		$(DOBJ)/matrix.o			\
+		$(DOBJ)/nw.o
 	$(CC) $^ -o $(EXE) $(LDFLAGS)
 
 $(DOBJ)/%.o: 	$(DSRC)/%.c

@@ -1,214 +1,170 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-
 #include "common.h"
+#include "matrix.h"
 
-/* Algorithms enumeration */
-enum {
-	ALGO_UNKNOWN = -1,
-	ALGO_RECURSIVE = 0,
-	ALGO_ITERATIVE,
-	ALGO_PARALLELIZED,
-	ALGO_CLUSTERIZED,
-};
+static int __allocate_matrix(const algo_arg_t* args,
+			     matrix_t* score_matrix,
+			     matrix_t* move_matrix)
+{
+	if (matrix_init(score_matrix, args->len_a + 1, args->len_b + 1)) {
+		printf("couldn't allocate score matrix\n");
+		return 1;
+	}
+	if (matrix_init(move_matrix, args->len_a + 1, args->len_b + 1)) {
+		matrix_wipe(score_matrix);
+		printf("couldn't allocate move matrix\n");
+		return 1;
+	}
+	return 0;
+}
 
-algo_t algorithms[] = {
-	{
-		"recursive",
-		"recusrive implementation",
-		NULL
-	},
-	{
-		"iterative",
-		"iterative implementation",
-		NULL
-	},
-	{
-		"parallelized",
-		"parallelized iterative implementation",
-		NULL
-	},
-	{
-		"clusterized",
-		"clusterized parallelized implementation",
-		NULL
-	},
-};
-
-void print_algo_list(void) {
-	for (int i = 0; i < countof(algorithms); i++) {
-		printf(" -%s\t\t%s %s\n",
-		       algorithms[i].name,
-		       algorithms[i].desc,
-		       (!algorithms[i].func) ? "(not implemented)" : "");
+static void __init_matrix(const algo_arg_t* args,
+			 matrix_t* score_matrix,
+			 matrix_t* move_matrix)
+{
+	score_matrix->values[0] = 0;
+	move_matrix->values[0] = MOVE_NONE;
+	for (int x = 1; x < score_matrix->w; x++) {
+		int off = matrix_coord_offset(score_matrix, x, 0);
+		score_matrix->values[off] = -x;
+		move_matrix->values[off] = MOVE_LEFT;
+	}
+	for (int y = 1; y < score_matrix->h; y++) {
+		int off = matrix_coord_offset(score_matrix, 0, y);
+		score_matrix->values[off] = -y;
+		move_matrix->values[off] = MOVE_TOP;
 	}
 }
 
-int find_algo_id(const char* name) {
-	for (int i = 0; i < countof(algorithms); i++) {
-		if (!strcmp(name, algorithms[i].name)) {
-			return i;
-		}
+static void __compute_offsets(int w, int h, int d, int i,
+			      int d1_off, int d2_off, int d3_off,
+			      int* off_top, int* off_left, int* off_top_left)
+{
+	if (d < w) {
+		*off_top	= d2_off + i - 1;
+		*off_left	= d2_off + i;
+		*off_top_left	= d1_off + i - 1;
 	}
-	return ALGO_UNKNOWN;
+	else if (d == w) {
+		*off_top	= d2_off + i;
+		*off_left	= d2_off + i + 1;
+		*off_top_left	= d1_off + i;
+	}
+	else {
+		*off_top	= d2_off + i;
+		*off_left	= d2_off + i + 1;
+		*off_top_left	= d1_off + i + 1;
+	}
 }
 
-void help() {
-	printf("usage: nw [options] sequence1 sequence2\n\n"
+static void __process_case(const algo_arg_t* args,
+			   matrix_t* score_matrix,
+			   matrix_t* move_matrix,
+			   int d1_off, int d2_off, int d3_off,
+			   int d, int i, int x, int y)
+{
+	/* First line and first column is already filled */
+	if (x == 0 || y == 0) {
+		return;
+	}
 
-	       "use needleman-wunsch algorithm to do global"
-	       " alignment of sequences.\n\n"
+	/* Compute offsets */
+	int off_cur, off_top, off_left, off_top_left;
+	off_cur  = d3_off + i;
+	__compute_offsets(score_matrix->w, score_matrix->h, d, i,
+			  d1_off, d2_off, d3_off,
+			  &off_top, &off_left, &off_top_left);
 
-	       "options are:\n"
-	       " -h, --help		print this help\n"
-	       " -s, --string		(default) sequences are program arguments\n"
-	       " -f, --file		sequences are read from files\n"
-	       " -S, --Single 		sequences are from one file\n"
-	       " -a, --algorithm <algo>	use given algorithm for alignment\n"
-	       " -t, --time		print algorithm run time\n"
-	       " -c, --core 		specify the number of cores (iterative only)\n"
-	       " -v, --validate <file>	validate computed alignment using `file`\n"
-	       " -o, --output <file>	print alignment(s) to a file instead of stdout\n\n"
+	/* Values of neighbours */
+	int values[3] = {
+		score_matrix->values[off_top],
+		score_matrix->values[off_left],
+		score_matrix->values[off_top_left]
+	};
 
-	       "algorithm list:\n"
-	      );
+	/* Potential values from move */
+	int scores[3] = {
+		values[0] - 1,
+		values[1] - 1,
+		values[2]
+		+ ((args->seq_a[x - 1] == args->seq_b[y - 1]) ? 1 : -1)
+	};
 
-	print_algo_list();
+	int bests[3] = {
+		(scores[0] >= scores[1] && scores[0] >= scores[2]) ? 1 : 0,
+		(scores[1] >= scores[0] && scores[1] >= scores[2]) ? 1 : 0,
+		(scores[2] >= scores[0] && scores[2] >= scores[1]) ? 1 : 0
+	};
+	int best = bests[0] ? 0 : bests[1] ? 1 : 2;
+
+	score_matrix->values[off_cur] = scores[best];
+	move_matrix->values[off_cur] = bests[0] * MOVE_TOP
+				     | bests[1] * MOVE_LEFT
+				     | bests[2] * MOVE_TOP_LEFT;
 }
 
-/* Load mode of sequences */
-enum {
-	LM_ARGUMENTS,
-	LM_FILES,
-	LM_SINGLE_FILE,
-};
+static void __process_diagonal(const algo_arg_t* args,
+			       matrix_t* score_matrix,
+			       matrix_t* move_matrix,
+			       int diag)
+{
+	int d1_off = matrix_diag_offset(score_matrix, diag - 2);
+	int d2_off = matrix_diag_offset(score_matrix, diag - 1);
+	int d3_off = matrix_diag_offset(score_matrix, diag);
+	int d3_size = matrix_diag_size(score_matrix, diag);
+	int x = matrix_diag_x(score_matrix, diag);
+	int y = matrix_diag_y(score_matrix, diag);
 
-
-int main(int argc, char** argv) {
-	if (argc < 2) {
-		help();
-		return 1;
+	for (int i = 0; i < d3_size; i++) {
+		__process_case(args, score_matrix, move_matrix,
+			       d1_off, d2_off, d3_off,
+			       diag, i, x--, y++);
 	}
+}
 
-	/* program parameters */
-	int load_mode = LM_ARGUMENTS;
-	int algorithm = ALGO_ITERATIVE;
-	int do_bench  = 0;
-	int core_number = 1;
-	int do_validation = 0;
-	char validation_file[512] = "";
-	int file_output = 0;
-	char output_path[512] = "";
-	char seq_a_path[512], seq_b_path[512];
-	algo_arg_t args;
-	algo_res_t res;
-
-	/* parsing options */
-	char opt_c = 0;
-	while ((opt_c = getopt(argc, argv, "hsfSta:c:v:o:b:")) > 0) {
-		switch (opt_c) {
-		    case '?':
-		    case ':':
-			help();
-			return 1;
-
-		    case 'h':
-			help();
-			return 0;
-
-		    case 's':
-			load_mode = LM_ARGUMENTS;
-			break;
-
-		    case 'f':
-			load_mode = LM_FILES;
-			break;
-
-		    case 'S':
-			load_mode = LM_SINGLE_FILE;
-			break;
-		
-		    case 't':
-			do_bench = 1;
-			break;
-
-		    case 'a':
-			algorithm = find_algo_id(optarg);
-			if (algorithm == ALGO_UNKNOWN) {
-				printf("algorithms are:\n");
-				print_algo_list();
-				return 1;
-			}
-			break;
-
-		    case 'c':
-			if (sscanf(optarg, "%d", &core_number) != 1) {
-				printf("invalid number of cores\n");
-				return 1;
-			}
-			break;
-
-		    case 'v':
-			do_validation = 1;
-			strcpy(validation_file, optarg);
-			break;
-			
-		    case 'o':
-			file_output = 1;
-			strcpy(output_path, optarg);
-			break;
-			
-			
+static void __print_score_matrix(const algo_arg_t* args,
+				 const matrix_t* score_matrix)
+{
+	printf("      - ");
+	for (int x = 0; x < args->len_a; x++) {
+		printf("%3c ", args->seq_a[x]);
+	}
+	printf("\n");
+	
+	for (int y = 0; y < args->len_b + 1; y++) {
+		if (y == 0) {
+			printf("  - ");
 		}
+		else {
+			printf("%3c ", args->seq_b[y - 1]);
+		}
+		for (int x = 0; x < args->len_a + 1; x++) {
+			int off = matrix_coord_offset(score_matrix, x, y);
+			printf("%3d ", score_matrix->values[off]);
+		}
+		printf("\n");
 	}
 
-	/* Check sequences are given */
-	if (load_mode == LM_SINGLE_FILE && argc - optind < 1) {
-		printf("please specify single input sequences file\n");
+}
+
+int nw(const algo_arg_t* args, algo_res_t* res) {
+	matrix_t	score_matrix;
+	matrix_t	move_matrix;
+
+	/* Matrix initialisation */
+	if (__allocate_matrix(args, &score_matrix, &move_matrix)) {
 		return 1;
 	}
-	else if (load_mode != LM_SINGLE_FILE && argc - optind < 2) {
-		printf("please specify input sequences\n");
-		return 1;
+	__init_matrix(args, &score_matrix, &move_matrix);
+
+	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
+		__process_diagonal(args, &score_matrix, &move_matrix, d);
 	}
 
-	/* Load sequences */
-	if (load_mode == LM_ARGUMENTS) {
-		if (argc - optind < 2) {
-			printf("please specify input sequences\n");
-			return 1;
-		}
-		args.seq_a = argv[optind];
-		args.seq_b = argv[optind + 1];
-	}
-	else if (load_mode == LM_FILES) {
-		if (argc - optind < 2) {
-			printf("please specify input sequence files\n");
-			return 1;
-		}
-		/* TODO load from file */
-		return 1;
-	}
-	else if (load_mode == LM_SINGLE_FILE) {
-		if (argc - optind < 1) {
-			printf("please specify input sequence file\n");
-			return 1;
-		}
-		/* TODO load from file */
-		return 1;
-	}
-	args.len_a = strlen(args.seq_a);
-	args.len_b = strlen(args.seq_b);
+	__print_score_matrix(args, &score_matrix);
 
-	/* Start algorithm */
-	if (algorithms[algorithm].func == NULL) {
-		printf("`%s` algorithm is not implemented\n",
-		       algorithms[algorithm].name);
-		return 1;
-	}
-	algorithms[algorithm].func(&args, &res);
+	matrix_wipe(&score_matrix);
+	matrix_wipe(&move_matrix);
 
 	return 0;
 }

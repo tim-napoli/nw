@@ -36,6 +36,12 @@ int matrix_diag_size(const matrix_t* m, int d);
 
 int matrix_diag_offset(const matrix_t* m, int d);
 
+int matrix_coord_offset(const matrix_t* m, int x, int y);
+
+int matrix_diag_x(const matrix_t* m, int diag);
+
+int matrix_diag_y(const matrix_t* m, int diag);
+
 typedef struct submatrix {
 	int  diag_id;
 	int* values;

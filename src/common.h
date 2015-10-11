@@ -35,14 +35,26 @@ typedef struct algo_res {
 
 /* Needleman-Wunsch Algorithm function type.
  */
-typedef void (*algo_func_t)(const algo_arg_t*	args,
-			    algo_res_t*		res);
-
+typedef int (*algo_func_t)(const algo_arg_t*	args,
+			   algo_res_t*		res);
 typedef struct algo {
 	char		name[64];
 	char 		desc[256];
 	algo_func_t	func;
 } algo_t;
+
+/* Moves values
+ */
+enum {
+	MOVE_NONE	= 0,
+	MOVE_TOP	= 1,
+	MOVE_LEFT	= 2,
+	MOVE_TOP_LEFT	= 4,
+};
+
+/* Algorithms prototypes
+ */
+int nw(const algo_arg_t* args, algo_res_t* res);
 
 #endif
 

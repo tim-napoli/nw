@@ -36,19 +36,6 @@ int matrix_diag_size(const matrix_t* m, int d) {
 		  
 }
 
-/* Only for test !
- * This function, altough inefficient, is safe.
- */
-static int __matrix_diag_offset_test(const matrix_t* m, int d) {
-	int off = 0;
-
-	for (int i = 0; i < d; i++) {
-		off += matrix_diag_size(m, i);
-	}
-
-	return off;
-}
-
 /* TODO simplify this function */
 int matrix_diag_offset(const matrix_t* m, int d) {
 	int k = (d + 1) - m->w;
@@ -136,9 +123,47 @@ int matrix_diag_offset(const matrix_t* m, int d) {
 	}
 }
 
+int matrix_diag_y(const matrix_t* m, int diag) {
+	if (diag < m->w) {
+		return 0;
+	}
+	else {
+		return diag - m->w + 1;
+	}
+}
+
+int matrix_diag_x(const matrix_t* m, int diag) {
+	if (diag < m->w) {
+		return diag;
+	}
+	else {
+		return m->w - 1;
+	}
+}
+
+int matrix_coord_offset(const matrix_t* matrix, int x, int y) {
+	int diag = x + y; 
+	int diag_off = matrix_diag_offset(matrix, diag);
+	int diag_x = matrix_diag_x(matrix, diag);
+	int diag_y = matrix_diag_y(matrix, diag);
+	int rel_x = abs(x - diag_x);
+	int rel_y = abs(y - diag_y);
+	return diag_off + min(rel_x, rel_y);
+}
+
 #ifdef TEST
 
 #include <stdio.h>
+
+static int __matrix_diag_offset_test(const matrix_t* m, int d) {
+	int off = 0;
+
+	for (int i = 0; i < d; i++) {
+		off += matrix_diag_size(m, i);
+	}
+
+	return off;
+}
 
 int test_diag_offset(const matrix_t* m) {
 	for (int d = 0; d < m->w + m->h - 1; d++) {
@@ -154,6 +179,31 @@ int test_diag_offset(const matrix_t* m) {
 		}
 	}
 
+	return 0;
+}
+
+int test_conversion_xy(void) {
+	matrix_t m;
+	matrix_init(&m, 4, 3);
+
+	int references[] = {
+		0,  1,  3,  6,
+		2,  4,  7,  9,
+		5,  8, 10, 11
+	};
+
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 4; x++) {
+			int off = matrix_coord_offset(&m, x, y);
+			if (off != references[y * m.w + x]) {
+				printf("error for %d %d: expected %d, got %d\n",
+				       x, y, references[y * m.w + x], off);
+				return 1;
+			}
+		}
+	}
+
+	matrix_wipe(&m);
 	return 0;
 }
 
@@ -188,6 +238,8 @@ int main(void) {
 	matrix_wipe(&m_square);
 	matrix_wipe(&m_width);
 	matrix_wipe(&m_height);
+
+	test_conversion_xy();
 
 	return 0;
 }
