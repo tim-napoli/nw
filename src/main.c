@@ -65,7 +65,9 @@ void help() {
 	       " -h, --help		print this help\n"
 	       " -s, --string		(default) sequences are program arguments\n"
 	       " -f, --file		sequences are read from files\n"
-	       " -S, --Single 		sequences are from one file\n"
+	       " -F, --Fingle 		sequences are from a single file (two lines)\n"
+	       " -R, --Random <size>    generate random sequences of given size\n"
+	       " -S, --Seed <seed>	use given seed for random numbers generation\n"
 	       " -a, --algorithm <algo>	use given algorithm for alignment\n"
 	       " -t, --time		print algorithm run time\n"
 	       " -c, --core 		specify the number of cores (iterative only)\n"
@@ -83,6 +85,7 @@ enum {
 	LM_ARGUMENTS,
 	LM_FILES,
 	LM_SINGLE_FILE,
+	LM_RANDOM,
 };
 
 
@@ -102,12 +105,14 @@ int main(int argc, char** argv) {
 	int file_output = 0;
 	char output_path[512] = "";
 	char seq_a_path[512], seq_b_path[512];
+	int random_size = 0;
+	int seed = 0;
 	algo_arg_t args;
 	algo_res_t res;
 
 	/* parsing options */
 	char opt_c = 0;
-	while ((opt_c = getopt(argc, argv, "hsfSta:c:v:o:b:")) > 0) {
+	while ((opt_c = getopt(argc, argv, "hsfFR:S:ta:c:v:o:b:")) > 0) {
 		switch (opt_c) {
 		    case '?':
 		    case ':':
@@ -126,8 +131,23 @@ int main(int argc, char** argv) {
 			load_mode = LM_FILES;
 			break;
 
-		    case 'S':
+		    case 'F':
 			load_mode = LM_SINGLE_FILE;
+			break;
+
+		    case 'R':
+			load_mode = LM_RANDOM;
+			if (sscanf(optarg, "%d", &random_size) != 1) {
+				printf("invalid sequences size\n");
+				return 1;
+			}
+			break;
+
+		    case 'S':
+			if (sscanf(optarg, "%d", &seed) != 1) {
+				printf("invalid seed\n");
+				return 1;
+			}
 			break;
 		
 		    case 't':
@@ -169,7 +189,11 @@ int main(int argc, char** argv) {
 		printf("please specify single input sequences file\n");
 		return 1;
 	}
-	else if (load_mode != LM_SINGLE_FILE && argc - optind < 2) {
+	else if (load_mode == LM_FILES && argc - optind < 2) {
+		printf("please specify input sequence files\n");
+		return 1;
+	}
+	else if (load_mode == LM_ARGUMENTS && argc - optind < 2) {
 		printf("please specify input sequences\n");
 		return 1;
 	}
@@ -198,6 +222,17 @@ int main(int argc, char** argv) {
 		}
 		/* TODO load from file */
 		return 1;
+	}
+	else if (load_mode == LM_RANDOM) {
+		srand(seed);
+		args.seq_a = malloc(random_size + 1);
+		args.seq_b = malloc(random_size + 1);
+		args.seq_a[random_size] = '\0';
+		args.seq_b[random_size] = '\0';
+		for (int i = 0; i < random_size; i++) {
+			args.seq_a[i] = 'A' + rand() % ('G' - 'A'); 
+			args.seq_b[i] = 'A' + rand() % ('G' - 'A'); 
+		}
 	}
 	args.len_a = strlen(args.seq_a);
 	args.len_b = strlen(args.seq_b);

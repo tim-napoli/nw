@@ -90,6 +90,7 @@ static void __process_case(const algo_arg_t* args,
 		+ ((args->seq_a[x - 1] == args->seq_b[y - 1]) ? 1 : -1)
 	};
 
+	/* What is the best score ? */
 	int bests[3] = {
 		(scores[0] >= scores[1] && scores[0] >= scores[2]) ? 1 : 0,
 		(scores[1] >= scores[0] && scores[1] >= scores[2]) ? 1 : 0,
@@ -97,6 +98,7 @@ static void __process_case(const algo_arg_t* args,
 	};
 	int best = bests[0] ? 0 : bests[1] ? 1 : 2;
 
+	/* Fill the result */
 	score_matrix->values[off_cur] = scores[best];
 	move_matrix->values[off_cur] = bests[0] * MOVE_TOP
 				     | bests[1] * MOVE_LEFT
@@ -108,10 +110,15 @@ static void __process_diagonal(const algo_arg_t* args,
 			       matrix_t* move_matrix,
 			       int diag)
 {
+	/* Diagonal offsets */
 	int d1_off = matrix_diag_offset(score_matrix, diag - 2);
 	int d2_off = matrix_diag_offset(score_matrix, diag - 1);
 	int d3_off = matrix_diag_offset(score_matrix, diag);
+
+	/* Current diagonal size */
 	int d3_size = matrix_diag_size(score_matrix, diag);
+
+	/* Coordinates of the current diagonal first case */
 	int x = matrix_diag_x(score_matrix, diag);
 	int y = matrix_diag_y(score_matrix, diag);
 
@@ -122,8 +129,8 @@ static void __process_diagonal(const algo_arg_t* args,
 	}
 }
 
-static void __print_score_matrix(const algo_arg_t* args,
-				 const matrix_t* score_matrix)
+void print_score_matrix(const algo_arg_t* args,
+			const matrix_t* score_matrix)
 {
 	printf("      - ");
 	for (int x = 0; x < args->len_a; x++) {
@@ -147,9 +154,9 @@ static void __print_score_matrix(const algo_arg_t* args,
 
 }
 
-int nw(const algo_arg_t* args, algo_res_t* res) {
-	matrix_t	score_matrix;
-	matrix_t	move_matrix;
+int nw(const algo_arg_t* args, algo_res_t* res)
+{
+	matrix_t score_matrix, move_matrix;
 
 	/* Matrix initialisation */
 	if (__allocate_matrix(args, &score_matrix, &move_matrix)) {
@@ -161,7 +168,7 @@ int nw(const algo_arg_t* args, algo_res_t* res) {
 		__process_diagonal(args, &score_matrix, &move_matrix, d);
 	}
 
-	__print_score_matrix(args, &score_matrix);
+	//print_score_matrix(args, &score_matrix);
 
 	matrix_wipe(&score_matrix);
 	matrix_wipe(&move_matrix);

@@ -1,12 +1,13 @@
 #ifndef _common_h_
 #define _common_h_
 
+#include "matrix.h"
+
 #if 0
 
 typedef struct algo_cfg {
 	int core_number;
 } algo_cfg_t;
-
 
 #endif
 
@@ -55,6 +56,10 @@ enum {
 /* Algorithms prototypes
  */
 int nw(const algo_arg_t* args, algo_res_t* res);
+
+/* Some cool functions
+ */
+void print_score_matrix(const algo_arg_t* args, const matrix_t* score_matrix);
 
 #endif
 
