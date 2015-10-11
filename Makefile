@@ -15,7 +15,7 @@ CFLAGS=-std=gnu99 -fopenmp -Wall -O3 -I$(DINC)
 ifeq ($(SYS),freebsd)
 	LDFLAGS=-lm -lc -rpath=/usr/local/lib/gcc5 -lgomp
 else
-	LDFLAGS=-lm -lc
+	LDFLAGS=-lm -lc -lgomp
 endif
 	
 
