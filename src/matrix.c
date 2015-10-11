@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/mman.h>
 #include "common.h"
 #include "matrix.h"
 
-int matrix_init(matrix_t* m, int w, int h, int base_size) {
+int matrix_init(matrix_t* m, int w, int h, size_t base_size) {
+        printf("allocating %f MB\n", (base_size * w * h) / (1024.0 * 1024.0));
 	m->v.v = mmap(NULL,
 		      w * h * base_size,
 		      PROT_READ | PROT_WRITE,
@@ -12,6 +15,7 @@ int matrix_init(matrix_t* m, int w, int h, int base_size) {
 		      -1,
 		      0);
 	if (m->v.v == MAP_FAILED) {
+                printf("allocation error: %s\n", strerror(errno));
 		return 1;
 	}
 
