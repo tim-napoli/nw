@@ -28,7 +28,7 @@ algo_t algorithms[] = {
 	{
 		"parallelized",
 		"parallelized iterative implementation",
-		NULL
+		&nw_omp
 	},
 	{
 		"clusterized",

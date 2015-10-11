@@ -137,6 +137,33 @@ static void __process_diagonal(const algo_arg_t* args,
 	}
 }
 
+static void __process_diagonal_omp(const algo_arg_t* args,
+			           matrix_t* score_matrix,
+			           matrix_t* move_matrix,
+			           int diag)
+{
+	/* Diagonal offsets */
+	int d1_off = matrix_diag_offset(score_matrix, diag - 2);
+	int d2_off = matrix_diag_offset(score_matrix, diag - 1);
+	int d3_off = matrix_diag_offset(score_matrix, diag);
+
+	/* Current diagonal size */
+	int d3_size = matrix_diag_size(score_matrix, diag);
+
+	/* Coordinates of the current diagonal first case */
+	int x = matrix_diag_x(score_matrix, diag);
+	int y = matrix_diag_y(score_matrix, diag);
+
+	#pragma omp parallel for
+	for (int i = 0; i < d3_size; i++) {
+		int dx = x - i;
+		int dy = y + i;
+		__process_case(args, score_matrix, move_matrix,
+			       d1_off, d2_off, d3_off,
+			       diag, i, dx, dy);
+	}
+}
+
 void print_score_matrix(const algo_arg_t* args,
 			const matrix_t* score_matrix)
 {
@@ -174,6 +201,28 @@ int nw(const algo_arg_t* args, algo_res_t* res)
 
 	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
 		__process_diagonal(args, &score_matrix, &move_matrix, d);
+	}
+
+	//print_score_matrix(args, &score_matrix);
+
+	matrix_wipe(&score_matrix);
+	matrix_wipe(&move_matrix);
+
+	return 0;
+}
+
+int nw_omp(const algo_arg_t* args, algo_res_t* res)
+{
+	matrix_t score_matrix, move_matrix;
+
+	/* Matrix initialisation */
+	if (__allocate_matrix(args, &score_matrix, &move_matrix)) {
+		return 1;
+	}
+	__init_matrix(args, &score_matrix, &move_matrix);
+
+	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
+		__process_diagonal_omp(args, &score_matrix, &move_matrix, d);
 	}
 
 	//print_score_matrix(args, &score_matrix);

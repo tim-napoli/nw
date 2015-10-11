@@ -56,6 +56,7 @@ enum {
 /* Algorithms prototypes
  */
 int nw(const algo_arg_t* args, algo_res_t* res);
+int nw_omp(const algo_arg_t* args, algo_res_t* res);
 
 /* Some cool functions
  */
