@@ -10,7 +10,7 @@ EXE=nw
 
 #------------------ Compilation options ------------------#
 CC=gcc
-CFLAGS=-std=gnu99 -fopenmp -Wall -g -I$(DINC)
+CFLAGS=-std=gnu99 -fopenmp -Wall -O3 -I$(DINC)
 
 ifeq ($(SYS),freebsd)
 	LDFLAGS=-lm -lc -rpath=/usr/local/lib/gcc5 -lgomp

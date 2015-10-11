@@ -13,8 +13,8 @@
 #include "matrix.h"
 
 int open_tmp_buffer(char *path, size_t size) {
-	strcpy(path, "nw-XXXXXX");
-	int fd = open(mktemp(path), O_CREAT | O_RDWR);
+	strcpy(path, "nw-matrix-XXXXXX");
+	int fd = mkostemp(path, O_CREAT | O_RDWR);
 	if (fd < 0) {
 		printf("couldn't temporary allocation file\n");
 		return -1;

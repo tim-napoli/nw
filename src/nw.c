@@ -101,8 +101,6 @@ static void __process_diagonal(const algo_arg_t* args,
 
 	/* Current diagonal size */
 	int d3_size = matrix_diag_size(score_matrix, diag);
-	int d2_size = matrix_diag_size(score_matrix, diag - 1);
-	int d1_size = matrix_diag_size(score_matrix, diag - 2);
 
 	/* Coordinates of the current diagonal first case */
 	int x = matrix_diag_x(score_matrix, diag);
