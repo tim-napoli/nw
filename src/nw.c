@@ -2,28 +2,6 @@
 #include "common.h"
 #include "matrix.h"
 
-static int __allocate_matrix(const algo_arg_t* args,
-			     matrix_t* score_matrix,
-			     matrix_t* move_matrix)
-{
-	if (matrix_init(score_matrix,
-			args->len_a + 1, args->len_b + 1,
-			sizeof(int)))
-	{
-		printf("couldn't allocate score matrix\n");
-		return 1;
-	}
-	if (matrix_init(move_matrix,
-			args->len_a + 1, args->len_b + 1,
-			sizeof(char)))
-	{
-		matrix_wipe(score_matrix);
-		printf("couldn't allocate move matrix\n");
-		return 1;
-	}
-	return 0;
-}
-
 static void __init_matrix(const algo_arg_t* args,
 			 matrix_t* score_matrix,
 			 matrix_t* move_matrix)
@@ -123,6 +101,8 @@ static void __process_diagonal(const algo_arg_t* args,
 
 	/* Current diagonal size */
 	int d3_size = matrix_diag_size(score_matrix, diag);
+	int d2_size = matrix_diag_size(score_matrix, diag - 1);
+	int d1_size = matrix_diag_size(score_matrix, diag - 2);
 
 	/* Coordinates of the current diagonal first case */
 	int x = matrix_diag_x(score_matrix, diag);
@@ -189,46 +169,27 @@ void print_score_matrix(const algo_arg_t* args,
 
 }
 
-int nw(const algo_arg_t* args, algo_res_t* res)
+int nw(const algo_arg_t* args, algo_res_t* res,
+       matrix_t* score_matrix, matrix_t* move_matrix)
 {
-	matrix_t score_matrix, move_matrix;
-
 	/* Matrix initialisation */
-	if (__allocate_matrix(args, &score_matrix, &move_matrix)) {
-		return 1;
-	}
-	__init_matrix(args, &score_matrix, &move_matrix);
+	__init_matrix(args, score_matrix, move_matrix);
 
 	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
-		__process_diagonal(args, &score_matrix, &move_matrix, d);
+		__process_diagonal(args, score_matrix, move_matrix, d);
 	}
-
-	//print_score_matrix(args, &score_matrix);
-
-	matrix_wipe(&score_matrix);
-	matrix_wipe(&move_matrix);
 
 	return 0;
 }
 
-int nw_omp(const algo_arg_t* args, algo_res_t* res)
+int nw_omp(const algo_arg_t* args, algo_res_t* res,
+	   matrix_t* score_matrix, matrix_t* move_matrix)
 {
-	matrix_t score_matrix, move_matrix;
-
-	/* Matrix initialisation */
-	if (__allocate_matrix(args, &score_matrix, &move_matrix)) {
-		return 1;
-	}
-	__init_matrix(args, &score_matrix, &move_matrix);
+	__init_matrix(args, score_matrix, move_matrix);
 
 	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
-		__process_diagonal_omp(args, &score_matrix, &move_matrix, d);
+		__process_diagonal_omp(args, score_matrix, move_matrix, d);
 	}
-
-	//print_score_matrix(args, &score_matrix);
-
-	matrix_wipe(&score_matrix);
-	matrix_wipe(&move_matrix);
 
 	return 0;
 }

@@ -68,6 +68,7 @@ void help() {
 	       " -F, --Fingle 		sequences are from a single file (two lines)\n"
 	       " -R, --Random <size>    generate random sequences of given size\n"
 	       " -S, --Seed <seed>	use given seed for random numbers generation\n"
+	       " -u			use hard drive memory\n"
 	       " -a, --algorithm <algo>	use given algorithm for alignment\n"
 	       " -t, --time		print algorithm run time\n"
 	       " -c, --core 		specify the number of cores (iterative only)\n"
@@ -88,6 +89,29 @@ enum {
 	LM_RANDOM,
 };
 
+int allocate_matrix(const algo_arg_t* args,
+		    matrix_t* score_matrix,
+		    matrix_t* move_matrix,
+		    int use_file)
+{
+	if (matrix_init(score_matrix,
+			args->len_a + 1, args->len_b + 1,
+			sizeof(int), use_file))
+	{
+		printf("couldn't allocate score matrix\n");
+		return 1;
+	}
+	if (matrix_init(move_matrix,
+			args->len_a + 1, args->len_b + 1,
+			sizeof(char), use_file))
+	{
+		matrix_wipe(score_matrix);
+		printf("couldn't allocate move matrix\n");
+		return 1;
+	}
+	return 0;
+}
+
 
 int main(int argc, char** argv) {
 	if (argc < 2) {
@@ -107,12 +131,13 @@ int main(int argc, char** argv) {
 	char seq_a_path[512], seq_b_path[512];
 	int random_size = 0;
 	int seed = 0;
+	int use_file = 0;
 	algo_arg_t args;
 	algo_res_t res;
 
 	/* parsing options */
 	char opt_c = 0;
-	while ((opt_c = getopt(argc, argv, "hsfFR:S:ta:c:v:o:b:")) > 0) {
+	while ((opt_c = getopt(argc, argv, "hsfFR:S:tua:c:v:o:b:")) > 0) {
 		switch (opt_c) {
 		    case '?':
 		    case ':':
@@ -150,6 +175,10 @@ int main(int argc, char** argv) {
 			}
 			break;
 		
+		    case 'u':
+		    	use_file = 1;
+			break;
+
 		    case 't':
 			do_bench = 1;
 			break;
@@ -243,10 +272,23 @@ int main(int argc, char** argv) {
 		       algorithms[algorithm].name);
 		return 1;
 	}
-	if (algorithms[algorithm].func(&args, &res)) {
+
+	matrix_t score_matrix;
+	matrix_t move_matrix;
+
+	if (allocate_matrix(&args, &score_matrix, &move_matrix, use_file)) {
+		return 1;
+	}
+
+	if (algorithms[algorithm].func(&args, &res,
+				       &score_matrix, &move_matrix))
+	{
 		printf("algorithm failure\n");
 		return 1;
 	}
+
+	matrix_wipe(&score_matrix);
+	matrix_wipe(&move_matrix);
 
 	return 0;
 }

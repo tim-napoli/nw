@@ -37,7 +37,9 @@ typedef struct algo_res {
 /* Needleman-Wunsch Algorithm function type.
  */
 typedef int (*algo_func_t)(const algo_arg_t*	args,
-			   algo_res_t*		res);
+			   algo_res_t*		res,
+			   matrix_t*		score_matrix,
+			   matrix_t*		move_matrix);
 typedef struct algo {
 	char		name[64];
 	char 		desc[256];
@@ -53,10 +55,14 @@ enum {
 	MOVE_TOP_LEFT	= 4,
 };
 
+
+
 /* Algorithms prototypes
  */
-int nw(const algo_arg_t* args, algo_res_t* res);
-int nw_omp(const algo_arg_t* args, algo_res_t* res);
+int nw(const algo_arg_t* args, algo_res_t* res,
+       matrix_t* score_matrix, matrix_t* move_matrix);
+int nw_omp(const algo_arg_t* args, algo_res_t* res,
+	   matrix_t* score_matrix, matrix_t* move_matrix);
 
 /* Some cool functions
  */

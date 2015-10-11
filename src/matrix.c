@@ -1,20 +1,48 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "common.h"
 #include "matrix.h"
 
-int matrix_init(matrix_t* m, int w, int h, size_t base_size) {
+int open_tmp_buffer(char *path, size_t size) {
+	strcpy(path, "nw-XXXXXX");
+	int fd = open(mktemp(path), O_CREAT | O_RDWR);
+	if (fd < 0) {
+		printf("couldn't temporary allocation file\n");
+		return -1;
+	}
+
+        printf("creating %s (%f MB)\n", path, size / (1024.0 * 1024.0));
+	ftruncate(fd, size);
+
+	return fd;
+}
+
+int matrix_init(matrix_t* m, int w, int h, size_t base_size, int use_file) {
+	m->fd = -1;
+	if (use_file) {
+		m->fd = open_tmp_buffer(m->path, base_size * w * h);
+		if (m->fd < 0) {
+			return 1;
+		}
+	}
+
         printf("allocating %f MB\n", (base_size * w * h) / (1024.0 * 1024.0));
 	m->v.v = mmap(NULL,
 		      w * h * base_size,
 		      PROT_READ | PROT_WRITE,
-		      MAP_ANONYMOUS | MAP_PRIVATE,
-		      -1,
-		      0);
+		      ((m->fd == -1) ? MAP_PRIVATE | MAP_ANONYMOUS : MAP_SHARED),
+		      m->fd, 0);
 	if (m->v.v == MAP_FAILED) {
+		matrix_wipe(m);
                 printf("allocation error: %s\n", strerror(errno));
 		return 1;
 	}
@@ -27,7 +55,13 @@ int matrix_init(matrix_t* m, int w, int h, size_t base_size) {
 }
 
 void matrix_wipe(matrix_t* m) {
-	munmap(m->v.v, m->w * m->h * m->base_size);
+	if (m->v.v != MAP_FAILED) {
+		munmap(m->v.v, m->w * m->h * m->base_size);
+	}
+	if (m->fd >= 0) {
+		close(m->fd);
+		unlink(m->path);
+	}
 }
 
 int matrix_diag_size(const matrix_t* m, int d) {
@@ -189,7 +223,7 @@ int test_diag_offset(const matrix_t* m) {
 
 int test_conversion_xy(void) {
 	matrix_t m;
-	matrix_init(&m, 4, 3, sizeof(int));
+	matrix_init(&m, 4, 3, sizeof(int), 0);
 
 	int references[] = {
 		0,  1,  3,  6,
@@ -217,9 +251,9 @@ int main(void) {
 	matrix_t m_width;
 	matrix_t m_height;
 
-	matrix_init(&m_square, 11, 11, sizeof(int));
-	matrix_init(&m_width, 19, 7, sizeof(int));
-	matrix_init(&m_height, 29, 7, sizeof(int));
+	matrix_init(&m_square, 11, 11, sizeof(int), 0);
+	matrix_init(&m_width, 19, 7, sizeof(int), 0);
+	matrix_init(&m_height, 29, 7, sizeof(int), 0);
 
 	if (test_diag_offset(&m_square)) {
 		printf("error with square matrix\n");
