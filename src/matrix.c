@@ -4,25 +4,26 @@
 #include "common.h"
 #include "matrix.h"
 
-int matrix_init(matrix_t* m, int w, int h) {
-	m->values = mmap(NULL,
-			 w * h * sizeof(int),
-			 PROT_READ | PROT_WRITE,
-			 MAP_ANONYMOUS | MAP_PRIVATE,
-			 -1,
-			 0);
-	if (m->values == MAP_FAILED) {
+int matrix_init(matrix_t* m, int w, int h, int base_size) {
+	m->v.v = mmap(NULL,
+		      w * h * base_size,
+		      PROT_READ | PROT_WRITE,
+		      MAP_ANONYMOUS | MAP_PRIVATE,
+		      -1,
+		      0);
+	if (m->v.v == MAP_FAILED) {
 		return 1;
 	}
 
 	m->w = w;
 	m->h = h;
+	m->base_size = base_size;
 
 	return 0;
 }
 
 void matrix_wipe(matrix_t* m) {
-	munmap(m->values, m->w * m->h * sizeof(int));
+	munmap(m->v.v, m->w * m->h * m->base_size);
 }
 
 int matrix_diag_size(const matrix_t* m, int d) {
@@ -184,7 +185,7 @@ int test_diag_offset(const matrix_t* m) {
 
 int test_conversion_xy(void) {
 	matrix_t m;
-	matrix_init(&m, 4, 3);
+	matrix_init(&m, 4, 3, sizeof(int));
 
 	int references[] = {
 		0,  1,  3,  6,
@@ -212,9 +213,9 @@ int main(void) {
 	matrix_t m_width;
 	matrix_t m_height;
 
-	matrix_init(&m_square, 11, 11);
-	matrix_init(&m_width, 19, 7);
-	matrix_init(&m_height, 29, 7);
+	matrix_init(&m_square, 11, 11, sizeof(int));
+	matrix_init(&m_width, 19, 7, sizeof(int));
+	matrix_init(&m_height, 29, 7, sizeof(int));
 
 	if (test_diag_offset(&m_square)) {
 		printf("error with square matrix\n");

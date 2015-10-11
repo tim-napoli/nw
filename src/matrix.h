@@ -24,11 +24,16 @@
  *
  */
 typedef struct matrix {
-	int  w, h;
-	int* values;
+	int	w, h;
+	int	base_size;
+	union {
+		int*	i;
+		char*	c;
+		void*	v;
+	} v;
 } matrix_t;
 
-int matrix_init(matrix_t* m, int w, int h);
+int matrix_init(matrix_t* m, int w, int h, int base_size);
 
 void matrix_wipe(matrix_t* m);
 

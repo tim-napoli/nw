@@ -10,7 +10,7 @@ EXE=nw
 
 #------------------ Compilation options ------------------#
 CC=gcc
-CFLAGS=-Wall -g -I$(DINC)
+CFLAGS=-std=gnu99 -Wall -O3 -I$(DINC)
 LDFLAGS=-lm -lc
 
 

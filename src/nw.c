@@ -6,11 +6,17 @@ static int __allocate_matrix(const algo_arg_t* args,
 			     matrix_t* score_matrix,
 			     matrix_t* move_matrix)
 {
-	if (matrix_init(score_matrix, args->len_a + 1, args->len_b + 1)) {
+	if (matrix_init(score_matrix,
+			args->len_a + 1, args->len_b + 1,
+			sizeof(int)))
+	{
 		printf("couldn't allocate score matrix\n");
 		return 1;
 	}
-	if (matrix_init(move_matrix, args->len_a + 1, args->len_b + 1)) {
+	if (matrix_init(move_matrix,
+			args->len_a + 1, args->len_b + 1,
+			sizeof(char)))
+	{
 		matrix_wipe(score_matrix);
 		printf("couldn't allocate move matrix\n");
 		return 1;
@@ -22,17 +28,17 @@ static void __init_matrix(const algo_arg_t* args,
 			 matrix_t* score_matrix,
 			 matrix_t* move_matrix)
 {
-	score_matrix->values[0] = 0;
-	move_matrix->values[0] = MOVE_NONE;
+	score_matrix->v.i[0] = 0;
+	move_matrix->v.c[0] = MOVE_NONE;
 	for (int x = 1; x < score_matrix->w; x++) {
 		int off = matrix_coord_offset(score_matrix, x, 0);
-		score_matrix->values[off] = -x;
-		move_matrix->values[off] = MOVE_LEFT;
+		score_matrix->v.i[off] = -x;
+		move_matrix->v.c[off] = MOVE_LEFT;
 	}
 	for (int y = 1; y < score_matrix->h; y++) {
 		int off = matrix_coord_offset(score_matrix, 0, y);
-		score_matrix->values[off] = -y;
-		move_matrix->values[off] = MOVE_TOP;
+		score_matrix->v.i[off] = -y;
+		move_matrix->v.c[off] = MOVE_TOP;
 	}
 }
 
@@ -77,9 +83,9 @@ static void __process_case(const algo_arg_t* args,
 
 	/* Values of neighbours */
 	int values[3] = {
-		score_matrix->values[off_top],
-		score_matrix->values[off_left],
-		score_matrix->values[off_top_left]
+		score_matrix->v.i[off_top],
+		score_matrix->v.i[off_left],
+		score_matrix->v.i[off_top_left]
 	};
 
 	/* Potential values from move */
@@ -99,10 +105,10 @@ static void __process_case(const algo_arg_t* args,
 	int best = bests[0] ? 0 : bests[1] ? 1 : 2;
 
 	/* Fill the result */
-	score_matrix->values[off_cur] = scores[best];
-	move_matrix->values[off_cur] = bests[0] * MOVE_TOP
-				     | bests[1] * MOVE_LEFT
-				     | bests[2] * MOVE_TOP_LEFT;
+	score_matrix->v.i[off_cur] = scores[best];
+	move_matrix->v.c[off_cur]  = bests[0] * MOVE_TOP
+				   | bests[1] * MOVE_LEFT
+				   | bests[2] * MOVE_TOP_LEFT;
 }
 
 static void __process_diagonal(const algo_arg_t* args,
@@ -123,9 +129,11 @@ static void __process_diagonal(const algo_arg_t* args,
 	int y = matrix_diag_y(score_matrix, diag);
 
 	for (int i = 0; i < d3_size; i++) {
+		int dx = x - i;
+		int dy = y + i;
 		__process_case(args, score_matrix, move_matrix,
 			       d1_off, d2_off, d3_off,
-			       diag, i, x--, y++);
+			       diag, i, dx, dy);
 	}
 }
 
@@ -147,7 +155,7 @@ void print_score_matrix(const algo_arg_t* args,
 		}
 		for (int x = 0; x < args->len_a + 1; x++) {
 			int off = matrix_coord_offset(score_matrix, x, y);
-			printf("%3d ", score_matrix->values[off]);
+			printf("%3d ", score_matrix->v.i[off]);
 		}
 		printf("\n");
 	}
