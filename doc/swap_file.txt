@@ -1,0 +1,12 @@
+In order to compute long sequences, you need to increase your swap size.
+
+For exemple, add 16GB to swap size :
+$ dd if=/dev/zero of=extended_swap bs=4096 count=3900416
+# mkswap extended_swap
+# swapon extended_swap
+$ free
+
+To remove swap extension :
+# swapoff extended_swap
+$ free
+

@@ -35,15 +35,16 @@ int matrix_init(matrix_t* m, int w, int h, size_t base_size, int use_file) {
 		}
 	}
 
-        printf("allocating %f MB\n", (base_size * w * h) / (1024.0 * 1024.0));
 	m->v.v = mmap(NULL,
-		      w * h * base_size,
+		      base_size * w * h,
 		      PROT_READ | PROT_WRITE,
 		      ((m->fd == -1) ? MAP_PRIVATE | MAP_ANONYMOUS : MAP_SHARED),
 		      m->fd, 0);
 	if (m->v.v == MAP_FAILED) {
 		matrix_wipe(m);
                 printf("allocation error: %s\n", strerror(errno));
+		printf("trying to allocates %f MB\n",
+		       (base_size * w * h) / (1024.0 * 1024.0));
 		return 1;
 	}
 
@@ -76,18 +77,18 @@ int matrix_diag_size(const matrix_t* m, int d) {
 }
 
 /* TODO simplify this function */
-int matrix_diag_offset(const matrix_t* m, int d) {
-	int k = (d + 1) - m->w;
+size_t matrix_diag_offset(const matrix_t* m, size_t d) {
+	size_t k = (d + 1) - m->w;
 
 	if (m->w == m->h) {
 		if (d <= m->w) {
 			return (d * (d + 1)) / 2;
 		}
 		else {
-			int rh = m->h - 1;
-			int kh = m->h - k;
-			int sum = (rh * (rh + 1)) / 2
-				- (kh * (kh + 1)) / 2;
+			size_t rh = m->h - 1;
+			size_t kh = m->h - k;
+			size_t sum = (rh * (rh + 1)) / 2
+			   	   - (kh * (kh + 1)) / 2;
 			return (m->w * (m->w + 1)) / 2
 			     + sum;
 		}
@@ -106,17 +107,17 @@ int matrix_diag_offset(const matrix_t* m, int d) {
 			return d * (d + 1) / 2;
 		}
 		else if (d < m->w) {
-			int sup_d = m->h;
-			int dec = d - sup_d;
+			size_t sup_d = m->h;
+			size_t dec = d - sup_d;
 			return (sup_d * (sup_d + 1)) / 2
 			     + dec * m->h;
 		}
 		else {
-			int sup_d = m->h;
-			int dec = m->w - sup_d;
-			int h = m->h - 1;
-			int hk = m->h - k;
-			int diff_sum = (h * (h + 1)) / 2
+			size_t sup_d = m->h;
+			size_t dec = m->w - sup_d;
+			size_t h = m->h - 1;
+			size_t hk = m->h - k;
+			size_t diff_sum = (h * (h + 1)) / 2
 				     - (hk * (hk + 1)) / 2;
 			return (sup_d * (sup_d + 1)) / 2
 			     + dec * m->h
@@ -141,18 +142,18 @@ int matrix_diag_offset(const matrix_t* m, int d) {
 			return d * (d + 1) / 2;
 		}
 		else if (d < m->h) {
-			int sup_d = m->w;
-			int dec = d - sup_d;
+			size_t sup_d = m->w;
+			size_t dec = d - sup_d;
 			return (sup_d * (sup_d + 1)) / 2
 			     + dec * m->w;
 		}
 		else {
 			k -= (m->h - m->w);
-			int sup_d = m->w;
-			int dec = m->h - sup_d;
-			int w = m->w - 1;
-			int wk = m->w - k;
-			int diff_sum = (w * (w + 1)) / 2
+			size_t sup_d = m->w;
+			size_t dec = m->h - sup_d;
+			size_t w = m->w - 1;
+			size_t wk = m->w - k;
+			size_t diff_sum = (w * (w + 1)) / 2
 				     - (wk * (wk + 1)) / 2;
 			return (sup_d * (sup_d + 1)) / 2
 			     + dec * m->w
@@ -180,13 +181,13 @@ int matrix_diag_x(const matrix_t* m, int diag) {
 	}
 }
 
-int matrix_coord_offset(const matrix_t* matrix, int x, int y) {
-	int diag = x + y; 
-	int diag_off = matrix_diag_offset(matrix, diag);
-	int diag_x = matrix_diag_x(matrix, diag);
-	int diag_y = matrix_diag_y(matrix, diag);
-	int rel_x = abs(x - diag_x);
-	int rel_y = abs(y - diag_y);
+size_t matrix_coord_offset(const matrix_t* matrix, int x, int y) {
+	size_t diag = x + y; 
+	size_t diag_off = matrix_diag_offset(matrix, diag);
+	size_t diag_x = matrix_diag_x(matrix, diag);
+	size_t diag_y = matrix_diag_y(matrix, diag);
+	size_t rel_x = abs(x - diag_x);
+	size_t rel_y = abs(y - diag_y);
 	return diag_off + min(rel_x, rel_y);
 }
 

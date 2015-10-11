@@ -9,20 +9,24 @@ static void __init_matrix(const algo_arg_t* args,
 	score_matrix->v.i[0] = 0;
 	move_matrix->v.c[0] = MOVE_NONE;
 	for (int x = 1; x < score_matrix->w; x++) {
-		int off = matrix_coord_offset(score_matrix, x, 0);
+		size_t off = matrix_coord_offset(score_matrix, x, 0);
 		score_matrix->v.i[off] = -x;
 		move_matrix->v.c[off] = MOVE_LEFT;
 	}
 	for (int y = 1; y < score_matrix->h; y++) {
-		int off = matrix_coord_offset(score_matrix, 0, y);
+		size_t off = matrix_coord_offset(score_matrix, 0, y);
 		score_matrix->v.i[off] = -y;
 		move_matrix->v.c[off] = MOVE_TOP;
 	}
 }
 
 static void __compute_offsets(int w, int h, int d, int i,
-			      int d1_off, int d2_off, int d3_off,
-			      int* off_top, int* off_left, int* off_top_left)
+			      size_t d1_off,
+			      size_t d2_off,
+			      size_t d3_off,
+			      size_t* off_top,
+			      size_t* off_left,
+			      size_t* off_top_left)
 {
 	if (d < w) {
 		*off_top	= d2_off + i - 1;
@@ -44,7 +48,7 @@ static void __compute_offsets(int w, int h, int d, int i,
 static void __process_case(const algo_arg_t* args,
 			   matrix_t* score_matrix,
 			   matrix_t* move_matrix,
-			   int d1_off, int d2_off, int d3_off,
+			   size_t d1_off, size_t d2_off, size_t d3_off,
 			   int d, int i, int x, int y)
 {
 	/* First line and first column is already filled */
@@ -53,7 +57,7 @@ static void __process_case(const algo_arg_t* args,
 	}
 
 	/* Compute offsets */
-	int off_cur, off_top, off_left, off_top_left;
+	size_t off_cur, off_top, off_left, off_top_left;
 	off_cur  = d3_off + i;
 	__compute_offsets(score_matrix->w, score_matrix->h, d, i,
 			  d1_off, d2_off, d3_off,
@@ -95,12 +99,14 @@ static void __process_diagonal(const algo_arg_t* args,
 			       int diag)
 {
 	/* Diagonal offsets */
-	int d1_off = matrix_diag_offset(score_matrix, diag - 2);
-	int d2_off = matrix_diag_offset(score_matrix, diag - 1);
-	int d3_off = matrix_diag_offset(score_matrix, diag);
+	size_t d1_off = matrix_diag_offset(score_matrix, diag - 2);
+	size_t d2_off = matrix_diag_offset(score_matrix, diag - 1);
+	size_t d3_off = matrix_diag_offset(score_matrix, diag);
 
 	/* Current diagonal size */
 	int d3_size = matrix_diag_size(score_matrix, diag);
+	int d2_size = matrix_diag_size(score_matrix, diag);
+	int d1_size = matrix_diag_size(score_matrix, diag);
 
 	/* Coordinates of the current diagonal first case */
 	int x = matrix_diag_x(score_matrix, diag);
@@ -121,9 +127,9 @@ static void __process_diagonal_omp(const algo_arg_t* args,
 			           int diag)
 {
 	/* Diagonal offsets */
-	int d1_off = matrix_diag_offset(score_matrix, diag - 2);
-	int d2_off = matrix_diag_offset(score_matrix, diag - 1);
-	int d3_off = matrix_diag_offset(score_matrix, diag);
+	size_t d1_off = matrix_diag_offset(score_matrix, diag - 2);
+	size_t d2_off = matrix_diag_offset(score_matrix, diag - 1);
+	size_t d3_off = matrix_diag_offset(score_matrix, diag);
 
 	/* Current diagonal size */
 	int d3_size = matrix_diag_size(score_matrix, diag);

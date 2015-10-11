@@ -41,9 +41,9 @@ void matrix_wipe(matrix_t* m);
 
 int matrix_diag_size(const matrix_t* m, int d);
 
-int matrix_diag_offset(const matrix_t* m, int d);
+size_t matrix_diag_offset(const matrix_t* m, size_t d);
 
-int matrix_coord_offset(const matrix_t* m, int x, int y);
+size_t matrix_coord_offset(const matrix_t* m, int x, int y);
 
 int matrix_diag_x(const matrix_t* m, int diag);
 
