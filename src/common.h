@@ -38,7 +38,6 @@ typedef struct algo_res {
  */
 typedef int (*algo_func_t)(const algo_arg_t*	args,
 			   algo_res_t*		res,
-			   matrix_t*		score_matrix,
 			   matrix_t*		move_matrix);
 typedef struct algo {
 	char		name[64];
@@ -60,9 +59,9 @@ enum {
 /* Algorithms prototypes
  */
 int nw(const algo_arg_t* args, algo_res_t* res,
-       matrix_t* score_matrix, matrix_t* move_matrix);
+       matrix_t* move_matrix);
 int nw_omp(const algo_arg_t* args, algo_res_t* res,
-	   matrix_t* score_matrix, matrix_t* move_matrix);
+	   matrix_t* move_matrix);
 
 /* Some cool functions
  */

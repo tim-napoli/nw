@@ -29,7 +29,7 @@ algo_t algorithms[] = {
 	{
 		"parallelized",
 		"parallelized iterative implementation",
-		&nw_omp
+		NULL
 	},
 	{
 		"clusterized",
@@ -92,22 +92,13 @@ enum {
 };
 
 int allocate_matrix(const algo_arg_t* args,
-		    matrix_t* score_matrix,
 		    matrix_t* move_matrix,
 		    int use_file)
 {
-	if (matrix_init(score_matrix,
-			args->len_a + 1, args->len_b + 1,
-			sizeof(int), use_file))
-	{
-		printf("couldn't allocate score matrix\n");
-		return 1;
-	}
 	if (matrix_init(move_matrix,
 			args->len_a + 1, args->len_b + 1,
 			sizeof(char), use_file))
 	{
-		matrix_wipe(score_matrix);
 		printf("couldn't allocate move matrix\n");
 		return 1;
 	}
@@ -281,15 +272,14 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	matrix_t score_matrix;
 	matrix_t move_matrix;
 
-	if (allocate_matrix(&args, &score_matrix, &move_matrix, use_file)) {
+	if (allocate_matrix(&args, &move_matrix, use_file)) {
 		return 1;
 	}
 
 	if (algorithms[algorithm].func(&args, &res,
-				       &score_matrix, &move_matrix))
+				       &move_matrix))
 	{
 		printf("algorithm failure\n");
 		return 1;
@@ -299,8 +289,6 @@ int main(int argc, char** argv) {
 	print_score_matrix(&args, &score_matrix);
 	print_move_matrix(&args, &move_matrix);
 #endif
-
-	matrix_wipe(&score_matrix);
 
 	if (bound != 0) {
 		alignment_t* alignments = NULL;
