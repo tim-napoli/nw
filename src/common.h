@@ -69,5 +69,17 @@ void print_score_matrix(const algo_arg_t* args, const matrix_t* score_matrix);
 
 void print_move_matrix(const algo_arg_t* args, const matrix_t* move_matrix);
 
+extern int verbose;
+
+#define VERBOSE_FMT(_fmt, ...) \
+	if (verbose) { \
+		printf("> "_fmt, __VA_ARGS__); \
+	}
+
+#define VERBOSE(_fmt) \
+	if (verbose) { \
+		printf("> "_fmt); \
+	}
+
 #endif
 

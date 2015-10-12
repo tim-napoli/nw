@@ -6,6 +6,8 @@
 #include "common.h"
 #include "alignment.h"
 
+int verbose = 0;
+
 /* Algorithms enumeration */
 enum {
 	ALGO_UNKNOWN = -1,
@@ -191,7 +193,7 @@ int main(int argc, char** argv) {
 
 	/* parsing options */
 	char opt_c = 0;
-	while ((opt_c = getopt(argc, argv, "hsfFR:S:tua:c:v:o:b:m:")) > 0) {
+	while ((opt_c = getopt(argc, argv, "hsfFR:S:tua:c:v:o:b:m:V")) > 0) {
 		switch (opt_c) {
 		    case '?':
 		    case ':':
@@ -269,6 +271,10 @@ int main(int argc, char** argv) {
 				return 1;
 			}
 			break;
+
+		    case 'V':
+			verbose = 1;
+			break;
 		}
 	}
 
@@ -331,6 +337,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	VERBOSE_FMT("start %s algorithm.\n", algorithms[algorithm].name);
 	if (algorithms[algorithm].func(&args, &res,
 				       &move_matrix))
 	{
@@ -344,6 +351,7 @@ int main(int argc, char** argv) {
 #endif
 
 	if (bound != 0) {
+		VERBOSE_FMT("retrieving alignments (max %d)\n", bound);
 		alignment_t* alignments = NULL;
 		int nalignments = compute_alignments(&args, &move_matrix, &alignments,
 						     bound);

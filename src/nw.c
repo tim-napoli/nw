@@ -188,9 +188,18 @@ int nw(const algo_arg_t* args, algo_res_t* res,
 	wscores[1][0] = -1;
 	wscores[1][1] = -1;
 
+	size_t total_size = (args->len_a + 1) * (size_t) (args->len_b + 1);
+	size_t current = 3;
 	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
 		__process_diagonal(args, wscores, move_matrix, d);
+
+		current += matrix_diag_size(move_matrix, d);
+		if (d % 10 == 0) {
+			VERBOSE_FMT("progression: %f%%\r",
+				    current * 100 / (float) total_size);
+		}
 	}
+	VERBOSE("\n");
 
 	free(score_buf);
 
@@ -223,9 +232,18 @@ int nw_omp(const algo_arg_t* args, algo_res_t* res,
 	wscores[1][0] = -1;
 	wscores[1][1] = -1;
 
+	size_t total_size = (args->len_a + 1) * (size_t) (args->len_b + 1);
+	size_t current = 3;
 	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
 		__process_diagonal_omp(args, wscores, move_matrix, d);
+
+		current += matrix_diag_size(move_matrix, d);
+		if (d % 10 == 0) {
+			VERBOSE_FMT("progression: %f%%\r",
+				    current * 100 / (float) total_size);
+		}
 	}
+	VERBOSE("\n");
 
 	free(score_buf);
 
