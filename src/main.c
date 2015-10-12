@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 	int random_size = 0;
 	int seed = 0;
 	int use_file = 0;
-	int bound = 0;
+	int bound = -1;
 	algo_arg_t args;
 	algo_res_t res;
 
@@ -302,21 +302,23 @@ int main(int argc, char** argv) {
 
 	matrix_wipe(&score_matrix);
 
-	alignment_t* alignments = NULL;
-	int nalignments = compute_alignments(&args, &move_matrix, &alignments,
-					     bound);
-	if (nalignments <= 0) {
-		printf("Error during alignment creation\n");
-		matrix_wipe(&move_matrix);
-		return 1;
-	}
+	if (bound != 0) {
+		alignment_t* alignments = NULL;
+		int nalignments = compute_alignments(&args, &move_matrix, &alignments,
+						     bound);
+		if (nalignments <= 0) {
+			printf("Error during alignment creation\n");
+			matrix_wipe(&move_matrix);
+			return 1;
+		}
 
-	for (int i = 0; i < nalignments; i++) {
-		printf("alignment %d:\n", i + 1);
-		print_alignment(alignments + i);
-		alignment_wipe(alignments + i);
+		for (int i = 0; i < nalignments; i++) {
+			printf("alignment %d:\n", i + 1);
+			print_alignment(alignments + i);
+			alignment_wipe(alignments + i);
+		}
+		free(alignments);
 	}
-	free(alignments);
 
 	matrix_wipe(&move_matrix);
 
