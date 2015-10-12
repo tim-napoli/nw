@@ -144,7 +144,7 @@ size_t matrix_diag_offset(const matrix_t* m, size_t d) {
 		else if (d < m->h) {
 			size_t sup_d = m->w;
 			size_t dec = d - sup_d;
-			return (sup_d * (sup_d)) / 2
+			return (sup_d * (sup_d + 1)) / 2
 			     + dec * m->w;
 		}
 		else {
