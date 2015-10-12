@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "alignment.h"
+#include "bench.h"
 
 int verbose = 0;
 
@@ -190,6 +191,8 @@ int main(int argc, char** argv) {
 	int bound = -1;
 	algo_arg_t args;
 	algo_res_t res;
+	bench_t bench_algo;
+	bench_t bench_align;
 
 	/* parsing options */
 	char opt_c = 0;
@@ -337,6 +340,10 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	if (do_bench) {
+		bench_start(&bench_algo, "algorithm runtime");
+	}
+
 	VERBOSE_FMT("start %s algorithm.\n", algorithms[algorithm].name);
 	if (algorithms[algorithm].func(&args, &res,
 				       &move_matrix))
@@ -344,11 +351,19 @@ int main(int argc, char** argv) {
 		printf("algorithm failure\n");
 		return 1;
 	}
+	
+	if (do_bench) {
+		bench_end(&bench_algo);
+	}
 
 #if 0
 	print_score_matrix(&args, &score_matrix);
 	print_move_matrix(&args, &move_matrix);
 #endif
+
+	if (do_bench) {
+		bench_start(&bench_align, "alignment runtime");
+	}
 
 	if (bound != 0) {
 		VERBOSE_FMT("retrieving alignments (max %d)\n", bound);
@@ -367,6 +382,15 @@ int main(int argc, char** argv) {
 			alignment_wipe(alignments + i);
 		}
 		free(alignments);
+	}
+
+	if (do_bench) {
+		bench_end(&bench_align);
+	}
+
+	if (do_bench) {
+		printf("algorithm runtime: %f\n", bench_diff_s(&bench_algo));
+		printf("alignment runtime: %f\n", bench_diff_s(&bench_align));
 	}
 
 	matrix_wipe(&move_matrix);
