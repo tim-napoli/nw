@@ -127,7 +127,7 @@ static altree_t* __altree_build_node(const algo_arg_t* args,
 		return node;
 	}
 
-	int offset = matrix_coord_offset(move_matrix, x, y);
+	size_t offset = matrix_coord_offset(move_matrix, x, y);
 	if (move_matrix->v.c[offset] & MOVE_TOP) {
 		node->up[0]	= '-';
 		node->down[0]	= args->seq_b[y - 1];
