@@ -129,29 +129,37 @@ static void __process_diagonal(const algo_arg_t* args,
 	wscores[2] = tmp;
 }
 
-void print_move_matrix(const algo_arg_t* args,
-		       const matrix_t* move_matrix)
+static void __process_diagonal_omp(const algo_arg_t* args,
+				   int** wscores,
+				   matrix_t* move_matrix,
+				   int diag)
 {
-	printf("      - ");
-	for (int x = 0; x < args->len_a; x++) {
-		printf("%3c ", args->seq_a[x]);
-	}
-	printf("\n");
-	
-	for (int y = 0; y < args->len_b + 1; y++) {
-		if (y == 0) {
-			printf("  - ");
-		}
-		else {
-			printf("%3c ", args->seq_b[y - 1]);
-		}
-		for (int x = 0; x < args->len_a + 1; x++) {
-			int off = matrix_coord_offset(move_matrix, x, y);
-			printf("%3x ", move_matrix->v.c[off]);
-		}
-		printf("\n");
+	/* Diagonal offsets */
+	size_t d1_off = matrix_diag_offset(move_matrix, diag - 2);
+	size_t d2_off = matrix_diag_offset(move_matrix, diag - 1);
+	size_t d3_off = matrix_diag_offset(move_matrix, diag);
+
+	/* Current diagonal size */
+	int d3_size = matrix_diag_size(move_matrix, diag);
+
+	/* Coordinates of the current diagonal first case */
+	int x = matrix_diag_x(move_matrix, diag);
+	int y = matrix_diag_y(move_matrix, diag);
+
+	#pragma omp parallel for
+	for (int i = 0; i < d3_size; i++) {
+		int dx = x - i;
+		int dy = y + i;
+		__process_case(args, wscores, move_matrix,
+			       d1_off, d2_off, d3_off,
+			       diag, i, dx, dy);
 	}
 
+	/* Move score diagonales */
+	int* tmp = wscores[0];
+	wscores[0] = wscores[1];
+	wscores[1] = wscores[2];
+	wscores[2] = tmp;
 }
 
 int nw(const algo_arg_t* args, algo_res_t* res,
@@ -188,4 +196,65 @@ int nw(const algo_arg_t* args, algo_res_t* res,
 
 	return 0;
 }
+
+int nw_omp(const algo_arg_t* args, algo_res_t* res,
+       matrix_t* move_matrix)
+{
+	int* score_buf = NULL;
+
+	/* Matrix initialisation */
+	__init_matrix(args, move_matrix);
+
+	/* Initialize score windows */
+	size_t size_win = args->len_a + args->len_b + 2;
+	score_buf = malloc(3 * size_win * sizeof(int));
+	if (!score_buf) {
+		printf("couldn't allocates score windows buffer\n");
+		return 1;
+	}
+
+	/* Windows initialisation */
+	int* wscores[3] = {
+		score_buf,
+		score_buf + size_win,
+		score_buf + 2 * size_win
+	};
+	wscores[0][0] = 0;
+	wscores[1][0] = -1;
+	wscores[1][1] = -1;
+
+	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
+		__process_diagonal_omp(args, wscores, move_matrix, d);
+	}
+
+	free(score_buf);
+
+	return 0;
+}
+
+void print_move_matrix(const algo_arg_t* args,
+		       const matrix_t* move_matrix)
+{
+	printf("      - ");
+	for (int x = 0; x < args->len_a; x++) {
+		printf("%3c ", args->seq_a[x]);
+	}
+	printf("\n");
+	
+	for (int y = 0; y < args->len_b + 1; y++) {
+		if (y == 0) {
+			printf("  - ");
+		}
+		else {
+			printf("%3c ", args->seq_b[y - 1]);
+		}
+		for (int x = 0; x < args->len_a + 1; x++) {
+			int off = matrix_coord_offset(move_matrix, x, y);
+			printf("%3x ", move_matrix->v.c[off]);
+		}
+		printf("\n");
+	}
+
+}
+
 
