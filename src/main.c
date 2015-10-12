@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "alignment.h"
 
 /* Algorithms enumeration */
 enum {
@@ -259,8 +260,8 @@ int main(int argc, char** argv) {
 		args.seq_a[random_size] = '\0';
 		args.seq_b[random_size] = '\0';
 		for (int i = 0; i < random_size; i++) {
-			args.seq_a[i] = 'A' + rand() % ('G' - 'A'); 
-			args.seq_b[i] = 'A' + rand() % ('G' - 'A'); 
+			args.seq_a[i] = 'A' + rand() % ('Z' - 'A'); 
+			args.seq_b[i] = 'A' + rand() % ('Z' - 'A'); 
 		}
 	}
 	args.len_a = strlen(args.seq_a);
@@ -287,7 +288,28 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+#if 0
+	print_score_matrix(&args, &score_matrix);
+	print_move_matrix(&args, &move_matrix);
+#endif
+
 	matrix_wipe(&score_matrix);
+
+	alignment_t* alignments = NULL;
+	int nalignments = compute_alignments(&args, &move_matrix, &alignments);
+	if (nalignments <= 0) {
+		printf("Error during alignment creation\n");
+		matrix_wipe(&move_matrix);
+		return 1;
+	}
+
+	for (int i = 0; i < nalignments; i++) {
+		printf("alignment %d:\n", i + 1);
+		print_alignment(alignments + i);
+		alignment_wipe(alignments + i);
+	}
+	free(alignments);
+
 	matrix_wipe(&move_matrix);
 
 	return 0;

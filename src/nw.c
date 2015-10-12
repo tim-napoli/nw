@@ -173,6 +173,31 @@ void print_score_matrix(const algo_arg_t* args,
 
 }
 
+void print_move_matrix(const algo_arg_t* args,
+		       const matrix_t* move_matrix)
+{
+	printf("      - ");
+	for (int x = 0; x < args->len_a; x++) {
+		printf("%3c ", args->seq_a[x]);
+	}
+	printf("\n");
+	
+	for (int y = 0; y < args->len_b + 1; y++) {
+		if (y == 0) {
+			printf("  - ");
+		}
+		else {
+			printf("%3c ", args->seq_b[y - 1]);
+		}
+		for (int x = 0; x < args->len_a + 1; x++) {
+			int off = matrix_coord_offset(move_matrix, x, y);
+			printf("%3x ", move_matrix->v.c[off]);
+		}
+		printf("\n");
+	}
+
+}
+
 int nw(const algo_arg_t* args, algo_res_t* res,
        matrix_t* score_matrix, matrix_t* move_matrix)
 {

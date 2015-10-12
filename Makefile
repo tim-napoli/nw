@@ -25,7 +25,8 @@ all: init $(EXE) tests prototypes
 
 $(EXE):		$(DOBJ)/main.o				\
 		$(DOBJ)/matrix.o			\
-		$(DOBJ)/nw.o
+		$(DOBJ)/nw.o				\
+		$(DOBJ)/alignment.o
 	$(CC) $^ -o $(EXE) $(LDFLAGS)
 
 $(DOBJ)/%.o: 	$(DSRC)/%.c

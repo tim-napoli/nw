@@ -68,5 +68,7 @@ int nw_omp(const algo_arg_t* args, algo_res_t* res,
  */
 void print_score_matrix(const algo_arg_t* args, const matrix_t* score_matrix);
 
+void print_move_matrix(const algo_arg_t* args, const matrix_t* move_matrix);
+
 #endif
 
