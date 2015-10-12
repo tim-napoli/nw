@@ -105,6 +105,67 @@ int allocate_matrix(const algo_arg_t* args,
 	return 0;
 }
 
+static size_t __get_file_length(FILE* f) {
+	long init_pos = ftell(f);
+	fseek(f, 0, SEEK_END);
+	long end_pos = ftell(f);
+	fseek(f, init_pos, SEEK_SET);
+	return end_pos;
+}
+
+int load_sequences_files(const char* path_a, const char* path_b,
+			 algo_arg_t* args)
+{
+	FILE* f_a = fopen(path_a, "r");
+	if (!f_a) {
+		printf("couldn't open sequence file %s\n", path_a);
+		goto error;
+	}
+	FILE* f_b = fopen(path_b, "r");
+	if (!f_b) {
+		printf("coundn't open sequence file %s\n", path_b);
+		goto error_1;	
+	}
+
+	args->len_a = __get_file_length(f_a);
+	args->len_b = __get_file_length(f_b);
+
+	args->seq_a = malloc(args->len_a + 1);
+	if (!args->seq_a) {
+		printf("couldn't allocate sequence a\n");
+		goto error_2; 
+	}
+	args->seq_b = malloc(args->len_b + 1);
+	if (!args->seq_b) {
+		printf("couldn't allocate sequence b\n");
+		goto error_3;
+	}
+
+	if (fread(args->seq_a, args->len_a, 1, f_a) != 1) {
+		printf("couldn't read file %s\n", path_a);
+		goto error_4;
+	}
+	if (fread(args->seq_b, args->len_b, 1, f_b) != 1) {
+		printf("couldn't read file %s\n", path_b);
+		goto error_4;
+	}
+
+	args->seq_a[args->len_a] = '\0';
+	args->seq_b[args->len_b] = '\0';
+
+	return 0;
+
+    error_4:
+	free(args->seq_b);
+    error_3:
+	free(args->seq_a);
+    error_2:
+	fclose(f_b);
+    error_1:
+	fclose(f_a);
+    error:
+	return 1;
+}
 
 int main(int argc, char** argv) {
 	if (argc < 2) {
@@ -121,7 +182,6 @@ int main(int argc, char** argv) {
 	char validation_file[512] = "";
 	int file_output = 0;
 	char output_path[512] = "";
-	char seq_a_path[512], seq_b_path[512];
 	int random_size = 0;
 	int seed = 0;
 	int use_file = 0;
@@ -228,26 +288,19 @@ int main(int argc, char** argv) {
 
 	/* Load sequences */
 	if (load_mode == LM_ARGUMENTS) {
-		if (argc - optind < 2) {
-			printf("please specify input sequences\n");
-			return 1;
-		}
 		args.seq_a = argv[optind];
 		args.seq_b = argv[optind + 1];
 	}
 	else if (load_mode == LM_FILES) {
-		if (argc - optind < 2) {
-			printf("please specify input sequence files\n");
+		/* TODO load from file */
+		if (load_sequences_files(argv[optind], argv[optind + 1],
+					 &args))
+		{
+			printf("couldn't load sequences\n");
 			return 1;
 		}
-		/* TODO load from file */
-		return 1;
 	}
 	else if (load_mode == LM_SINGLE_FILE) {
-		if (argc - optind < 1) {
-			printf("please specify input sequence file\n");
-			return 1;
-		}
 		/* TODO load from file */
 		return 1;
 	}
