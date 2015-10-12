@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include "alignment.h"
 
 /* The alignment tree will follow the pathes from the last square of the move
@@ -69,25 +70,33 @@ int altree_depth(const altree_t* tree) {
 	if (!tree) {
 		return 0;
 	}
-	return 1 + max(altree_depth(tree->childs[0]),
-		        max(altree_depth(tree->childs[1]),
-			    altree_depth(tree->childs[2])));
+
+	int depth = altree_depth(tree->childs[0]);
+	for (int i = 1; i < 3; i++) {
+		int d = altree_depth(tree->childs[i]);
+		if (d > depth) {
+			depth = d;
+		}
+	}
+
+	return 1 + depth;
 }
 
 /* Get tree leaves */
-int altree_get_leaves(altree_t* tree, altree_t** leaves) {
-	if (tree == NULL) {
+int altree_get_leaves(altree_t* tree, altree_t** leaves, int bound) {
+	if (tree == NULL || bound == 0) {
 		return 0;
 	}
 
 	int count = 0;
 	for (int i = 0; i < 3; i++) {
-		int atocount = altree_get_leaves(tree->childs[i], leaves);
+		int atocount = altree_get_leaves(tree->childs[i], leaves, bound);
 		leaves += atocount;
 		count += atocount;
+		bound -= atocount;
 	}
 
-	if (count == 0) {
+	if (count == 0 && bound > 0) {
 		*leaves = tree;
 		count++;
 	}
@@ -95,13 +104,15 @@ int altree_get_leaves(altree_t* tree, altree_t** leaves) {
 	return count;
 }
 
+static int _bound = 0;
+
 /* Build a tree node */
 static altree_t* __altree_build_node(const algo_arg_t* args,
 				     const matrix_t* move_matrix,
 				     int x, int y,
 				     altree_t* parent)
 {
-	if (x < 0 || y < 0) {
+	if (x < 0 || y < 0 || _bound == 0) {
 		return NULL;
 	}
 
@@ -112,6 +123,7 @@ static altree_t* __altree_build_node(const algo_arg_t* args,
 	}
 
 	if (x == 0 && y == 0) {
+		_bound--;
 		return node;
 	}
 
@@ -195,9 +207,13 @@ static void __build_alignment(const altree_t* tree, alignment_t* al)
 /* Get alignments from the tree */
 int altree_get_alignments(const algo_arg_t* args,
 			  altree_t* tree,
-			  alignment_t** alignments)
+			  alignment_t** alignments,
+			  int bound)
 {
 	int depth = altree_depth(tree);
+	if (bound <= 0) {
+		bound = INT_MAX;
+	}
 	int nalignments = altree_count_leaves(tree);
 
 	*alignments = malloc(nalignments * (sizeof(alignment_t)));
@@ -211,7 +227,7 @@ int altree_get_alignments(const algo_arg_t* args,
 		printf("couldn't allocate node stack\n");
 		goto error;
 	}
-	altree_get_leaves(tree, leaves);
+	altree_get_leaves(tree, leaves, nalignments);
 
 	for (int i = 0; i < nalignments; i++) {
 		alignment_init(&(*alignments)[i], depth + 1);
@@ -232,15 +248,23 @@ int altree_get_alignments(const algo_arg_t* args,
 
 int compute_alignments(const algo_arg_t* args,
 		       const matrix_t* move_matrix,
-		       alignment_t** alignments)
+		       alignment_t** alignments,
+		       int bound)
 {
+	if (bound <= 0) {
+		_bound = INT_MAX;
+	}
+	else {
+		_bound = bound;
+	}
+
 	altree_t* tree = altree_build(args, move_matrix);
 	if (tree == NULL) {
 		printf("couldn't build alignment tree.\n");
 		return -1;
 	}
 
-	int nalignments = altree_get_alignments(args, tree, alignments);
+	int nalignments = altree_get_alignments(args, tree, alignments, bound);
 	if (nalignments < 0) {
 		printf("couldn't build alignments.\n");
 		return -1;

@@ -16,7 +16,8 @@ void alignment_wipe(alignment_t* al);
 
 int compute_alignments(const algo_arg_t* args,
 		       const matrix_t* move_matrix,
-		       alignment_t** alignments);
+		       alignment_t** alignments,
+		       int bound);
 
 void print_alignment(const alignment_t* al);
 

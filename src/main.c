@@ -74,7 +74,8 @@ void help() {
 	       " -t, --time		print algorithm run time\n"
 	       " -c, --core 		specify the number of cores (iterative only)\n"
 	       " -v, --validate <file>	validate computed alignment using `file`\n"
-	       " -o, --output <file>	print alignment(s) to a file instead of stdout\n\n"
+	       " -o, --output <file>	print alignment(s) to a file instead of stdout\n"
+	       " -m, --max <max>	max alignments to print\n\n"
 
 	       "algorithm list:\n"
 	      );
@@ -133,12 +134,13 @@ int main(int argc, char** argv) {
 	int random_size = 0;
 	int seed = 0;
 	int use_file = 0;
+	int bound = 0;
 	algo_arg_t args;
 	algo_res_t res;
 
 	/* parsing options */
 	char opt_c = 0;
-	while ((opt_c = getopt(argc, argv, "hsfFR:S:tua:c:v:o:b:")) > 0) {
+	while ((opt_c = getopt(argc, argv, "hsfFR:S:tua:c:v:o:b:m:")) > 0) {
 		switch (opt_c) {
 		    case '?':
 		    case ':':
@@ -210,7 +212,12 @@ int main(int argc, char** argv) {
 			strcpy(output_path, optarg);
 			break;
 			
-			
+		    case 'm':
+			if (sscanf(optarg, "%d", &bound) != 1) {
+				printf("invalid max parameter\n");
+				return 1;
+			}
+			break;
 		}
 	}
 
@@ -296,7 +303,8 @@ int main(int argc, char** argv) {
 	matrix_wipe(&score_matrix);
 
 	alignment_t* alignments = NULL;
-	int nalignments = compute_alignments(&args, &move_matrix, &alignments);
+	int nalignments = compute_alignments(&args, &move_matrix, &alignments,
+					     bound);
 	if (nalignments <= 0) {
 		printf("Error during alignment creation\n");
 		matrix_wipe(&move_matrix);
