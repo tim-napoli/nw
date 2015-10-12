@@ -89,7 +89,7 @@ size_t matrix_diag_offset(const matrix_t* m, size_t d) {
 			size_t kh = m->h - k;
 			size_t sum = (rh * (rh + 1)) / 2
 			   	   - (kh * (kh + 1)) / 2;
-			return (m->w * (m->w + 1)) / 2
+			return (((size_t) m->w) * (((size_t) m->w) + 1)) / 2
 			     + sum;
 		}
 	}
@@ -144,7 +144,7 @@ size_t matrix_diag_offset(const matrix_t* m, size_t d) {
 		else if (d < m->h) {
 			size_t sup_d = m->w;
 			size_t dec = d - sup_d;
-			return (sup_d * (sup_d + 1)) / 2
+			return (sup_d * (sup_d)) / 2
 			     + dec * m->w;
 		}
 		else {
@@ -159,8 +159,8 @@ size_t matrix_diag_offset(const matrix_t* m, size_t d) {
 			     + dec * m->w
 			     + diff_sum;
 		}
-		return 0;
 	}
+	return -1;
 }
 
 int matrix_diag_y(const matrix_t* m, int diag) {
