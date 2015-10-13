@@ -50,7 +50,7 @@ void altree_clear(altree_t* tree) {
 /* Count number of leaves */
 int altree_count_leaves(const altree_t* tree) {
 	if (!tree) {
-		return NULL;
+		return 0;
 	}
 
 	if (!tree->childs[0] && !tree->childs[1] && !tree->childs[2]) {
