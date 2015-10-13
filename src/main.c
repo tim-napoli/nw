@@ -378,7 +378,14 @@ int main(int argc, char** argv) {
 
 		for (int i = 0; i < nalignments; i++) {
 			printf("alignment %d:\n", i + 1);
+
+			if (i == 0)
+			{
+				int w = score_alignment(alignments + i);
+				printf("le score est de %d\n",w);
+			}
 			print_alignment(alignments + i);
+
 			alignment_wipe(alignments + i);
 		}
 		free(alignments);

@@ -10,6 +10,7 @@ typedef struct alignment {
 	size_t	size;
 } alignment_t;
 
+
 int alignment_init(alignment_t* al, size_t size);
 
 void alignment_wipe(alignment_t* al);
@@ -20,6 +21,9 @@ int compute_alignments(const algo_arg_t* args,
 		       int bound);
 
 void print_alignment(const alignment_t* al);
+
+int score_alignment(const alignment_t* al);
+
 
 #endif
 

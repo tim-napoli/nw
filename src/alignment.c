@@ -278,3 +278,14 @@ void print_alignment(const alignment_t* al) {
 	printf("%s\n%s\n", al->up, al->down);
 }
 
+int score_alignment(const alignment_t* al) {
+	int score = 0;
+	for (int i = 0; i < al->size; ++i)
+	{
+		if(al->up[i] == al->down[i])
+			score++;
+		else
+			score--;
+	}
+	return score;
+}
