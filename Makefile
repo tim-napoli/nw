@@ -10,12 +10,22 @@ EXE=nw
 
 #------------------ Compilation options ------------------#
 CC=gcc
-CFLAGS=-std=gnu99 -fopenmp -Wall -O3 -g -I$(DINC)
+CFLAGS_BASE=-std=gnu99 -fopenmp -Wall -I$(DINC)
 
 ifeq ($(SYS),freebsd)
 	LDFLAGS=-lm -lc -rpath=/usr/local/lib/gcc5 -lgomp
 else
 	LDFLAGS=-lm -lc -lgomp
+endif
+
+ifeq ($(TYPE),debug)
+	CFLAGS=$(CFLAGS_BASE) -g
+else
+ifeq ($(TYPE),optimized)
+	CFLAGS=$(CFLAGS_BASE) -O3
+else
+	CFLAGS=$(CFLAGS_BASE)
+endif
 endif
 	
 
