@@ -10,7 +10,7 @@ EXE=nw
 
 #------------------ Compilation options ------------------#
 CC=gcc
-CFLAGS=-std=gnu99 -fopenmp -Wall -O3 -I$(DINC)
+CFLAGS=-std=gnu99 -fopenmp -Wall -O3 -g -I$(DINC)
 
 ifeq ($(SYS),freebsd)
 	LDFLAGS=-lm -lc -rpath=/usr/local/lib/gcc5 -lgomp
@@ -27,7 +27,8 @@ $(EXE):		$(DOBJ)/main.o				\
 		$(DOBJ)/matrix.o			\
 		$(DOBJ)/nw.o				\
 		$(DOBJ)/alignment.o			\
-		$(DOBJ)/bench.o
+		$(DOBJ)/bench.o             \
+		$(DOBJ)/validate.o       
 	$(CC) $^ -o $(EXE) $(LDFLAGS)
 
 $(DOBJ)/%.o: 	$(DSRC)/%.c

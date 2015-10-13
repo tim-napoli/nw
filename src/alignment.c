@@ -280,12 +280,18 @@ void print_alignment(const alignment_t* al) {
 
 int score_alignment(const alignment_t* al) {
 	int score = 0;
-	for (int i = 0; i < al->size; ++i)
+	//printf("la taille est de %d\n",al->size);
+	for (int i = 0; i < al->size-2; ++i)
 	{
-		if(al->up[i] == al->down[i])
-			score++;
+		if ((al->up[i] == '-') && (al->down[i] == '-'))
+		{
+			--score;
+		}
+
+		else if(al->up[i] == al->down[i] /*&& ((al->up[i] != '-') && (al->down[i] != '-'))*/ )
+			++score;
 		else
-			score--;
+			--score;
 	}
 	return score;
 }

@@ -6,6 +6,7 @@
 #include "common.h"
 #include "alignment.h"
 #include "bench.h"
+#include "validate.h"
 
 int verbose = 0;
 
@@ -375,7 +376,14 @@ int main(int argc, char** argv) {
 			matrix_wipe(&move_matrix);
 			return 1;
 		}
-
+		if (do_validation)
+		{
+			if (validate(validation_file,alignments,nalignments))
+				printf("you are a fucking genius !\n");
+			else
+				printf("you are a fucking retard !\n");
+		}
+		
 		for (int i = 0; i < nalignments; i++) {
 			printf("alignment %d:\n", i + 1);
 

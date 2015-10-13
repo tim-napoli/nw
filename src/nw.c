@@ -42,6 +42,7 @@ static void __compute_offsets(int w, int h, int d, int i,
 	}
 }
 
+//__attribute__ ((noinline))
 static void __process_case(const algo_arg_t* args,
 			   int** wscores,
 			   matrix_t* move_matrix,
@@ -97,6 +98,7 @@ static void __process_case(const algo_arg_t* args,
 				    | bests[2] * MOVE_TOP_LEFT;
 }
 
+//__attribute__ ((noinline))
 static void __process_diagonal(const algo_arg_t* args,
 			       int** wscores,
 			       matrix_t* move_matrix,
