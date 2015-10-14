@@ -13,8 +13,12 @@ int validate(char * validation_file, alignment_t* alignments,int nalignments)
 	while ('\n' != fgetc(fichier))
 		taille++;
 	fseek(fichier, 0, SEEK_SET);
-	char ligne1[taille]; //faire malloc si trop grand
-	char ligne2[taille];
+	//char ligne1[taille]; //faire malloc si trop grand
+	//char ligne2[taille];
+
+	char *ligne1,*ligne2;
+	ligne1 = malloc(taille * sizeof(char));
+	ligne2 = malloc(taille * sizeof(char));
 
 	fgets(ligne1,taille+1,fichier);
 	fgets(ligne2,taille+1,fichier);
