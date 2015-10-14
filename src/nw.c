@@ -42,7 +42,6 @@ static void __compute_offsets(int w, int h, int d, int i,
 	}
 }
 
-//__attribute__ ((noinline))
 static void __process_case(const algo_arg_t* args,
 			   int** wscores,
 			   matrix_t* move_matrix,
@@ -58,7 +57,6 @@ static void __process_case(const algo_arg_t* args,
 
 	/* First line and first column is already filled */
 	if (x == 0 || y == 0) {
-		/* XXX be carful about concurency here */
 		if (x == 0) {
 			wscores[2][off_cur - d3_off] = -y;
 		}
@@ -98,7 +96,6 @@ static void __process_case(const algo_arg_t* args,
 				    | bests[2] * MOVE_TOP_LEFT;
 }
 
-//__attribute__ ((noinline))
 static void __process_diagonal(const algo_arg_t* args,
 			       int** wscores,
 			       matrix_t* move_matrix,
@@ -157,15 +154,15 @@ static void __process_diagonal_omp(const algo_arg_t* args,
 			       diag, i, dx, dy);
 	}
 
-	/* Move score diagonales */
+	/* Rotate score diagonales */
 	int* tmp = wscores[0];
 	wscores[0] = wscores[1];
 	wscores[1] = wscores[2];
 	wscores[2] = tmp;
 }
 
-int nw(const algo_arg_t* args, algo_res_t* res,
-       matrix_t* move_matrix)
+static int __nw(const algo_arg_t* args, algo_res_t* res, matrix_t* move_matrix,
+		void (*process_diag)(const algo_arg_t*, int**, matrix_t*, int))
 {
 	int* score_buf = NULL;
 
@@ -193,7 +190,7 @@ int nw(const algo_arg_t* args, algo_res_t* res,
 	size_t total_size = (args->len_a + 1) * (size_t) (args->len_b + 1);
 	size_t current = 3;
 	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
-		__process_diagonal(args, wscores, move_matrix, d);
+		process_diag(args, wscores, move_matrix, d);
 
 		current += matrix_diag_size(move_matrix, d);
 		if (d % 10 == 0) {
@@ -206,53 +203,22 @@ int nw(const algo_arg_t* args, algo_res_t* res,
 	free(score_buf);
 
 	return 0;
+
+}
+
+int nw(const algo_arg_t* args, algo_res_t* res,
+       matrix_t* move_matrix)
+{
+	return __nw(args, res, move_matrix, &__process_diagonal);
 }
 
 int nw_omp(const algo_arg_t* args, algo_res_t* res,
        matrix_t* move_matrix)
 {
-	int* score_buf = NULL;
-
-	/* Matrix initialisation */
-	__init_matrix(args, move_matrix);
-
-	/* Initialize score windows */
-	size_t size_win = args->len_a + args->len_b + 2;
-	score_buf = malloc(3 * size_win * sizeof(int));
-	if (!score_buf) {
-		printf("couldn't allocates score windows buffer\n");
-		return 1;
-	}
-
-	/* Windows initialisation */
-	int* wscores[3] = {
-		score_buf,
-		score_buf + size_win,
-		score_buf + 2 * size_win
-	};
-	wscores[0][0] = 0;
-	wscores[1][0] = -1;
-	wscores[1][1] = -1;
-
-	size_t total_size = (args->len_a + 1) * (size_t) (args->len_b + 1);
-	size_t current = 3;
-	for (int d = 2; d < args->len_a + args->len_b + 1; d++) {
-		__process_diagonal_omp(args, wscores, move_matrix, d);
-
-		current += matrix_diag_size(move_matrix, d);
-		if (d % 10 == 0) {
-			VERBOSE_FMT("progression: %f%%\r",
-				    current * 100 / (float) total_size);
-		}
-	}
-	VERBOSE("\n");
-
-	free(score_buf);
-
-	return 0;
+	return __nw(args, res, move_matrix, &__process_diagonal_omp);
 }
 
-void print_move_matrix(const algo_arg_t* args,
+ void print_move_matrix(const algo_arg_t* args,
 		       const matrix_t* move_matrix)
 {
 	printf("      - ");

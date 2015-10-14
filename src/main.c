@@ -302,7 +302,6 @@ int main(int argc, char** argv) {
 		args.seq_b = argv[optind + 1];
 	}
 	else if (load_mode == LM_FILES) {
-		/* TODO load from file */
 		if (load_sequences_files(argv[optind], argv[optind + 1],
 					 &args))
 		{
@@ -366,6 +365,7 @@ int main(int argc, char** argv) {
 		bench_start(&bench_align, "alignment runtime");
 	}
 
+	/* Alignment */
 	if (bound != 0) {
 		VERBOSE_FMT("retrieving alignments (max %d)\n", bound);
 		alignment_t* alignments = NULL;
@@ -378,10 +378,12 @@ int main(int argc, char** argv) {
 		}
 		if (do_validation)
 		{
-			if (validate(validation_file,alignments,nalignments))
+			if (validate(validation_file,alignments,nalignments)) {
 				printf("you are a fucking genius !\n");
-			else
+			}
+			else {
 				printf("you are a fucking retard !\n");
+			}
 		}
 		
 		for (int i = 0; i < nalignments; i++) {
@@ -390,7 +392,7 @@ int main(int argc, char** argv) {
 			if (i == 0)
 			{
 				int w = score_alignment(alignments + i);
-				printf("le score est de %d\n",w);
+				printf("alignment score: %d\n",w);
 			}
 			print_alignment(alignments + i);
 
